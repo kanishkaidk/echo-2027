@@ -8,6 +8,7 @@ import 'services/gemini_service.dart';
 import 'widgets/glass_hud.dart';
 import 'widgets/typewriter_text.dart';
 import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/character_select_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
@@ -59,6 +60,7 @@ class EchoesOf2076App extends StatelessWidget {
 
 enum GameScreen {
   splash,
+  onboarding,
   characterSelect,
   home,
   gameplay,
@@ -92,6 +94,11 @@ class _GameRouterState extends State<GameRouter> {
     switch (_currentScreen) {
       case GameScreen.splash:
         return SplashScreen(
+          onComplete: () => _transitionTo(GameScreen.onboarding),
+        );
+
+      case GameScreen.onboarding:
+        return OnboardingScreen(
           onComplete: () => _transitionTo(GameScreen.characterSelect),
         );
 
