@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
-// ignore: unused_import
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'models/game_state.dart';
 import 'services/gemini_service.dart';
 import 'widgets/glass_hud.dart';
 import 'widgets/typewriter_text.dart';
+import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/character_select_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/leaderboard_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/story_map_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,8 +58,17 @@ class EchoesOf2076App extends StatelessWidget {
   }
 }
 
-// ===== STATE MACHINE ROUTER =====
-enum GameScreen { intro, registration, gameplay }
+enum GameScreen {
+  splash,
+  onboarding,
+  characterSelect,
+  home,
+  gameplay,
+  profile,
+  leaderboard,
+  settings,
+  storyMap,
+}
 
 class GameRouter extends StatefulWidget {
   const GameRouter({super.key});
@@ -62,7 +78,7 @@ class GameRouter extends StatefulWidget {
 }
 
 class _GameRouterState extends State<GameRouter> {
-  GameScreen _currentScreen = GameScreen.intro;
+  GameScreen _currentScreen = GameScreen.splash;
   GameMetrics _gameMetrics = GameMetrics();
   String? _playerName;
 
@@ -76,25 +92,71 @@ class _GameRouterState extends State<GameRouter> {
   @override
   Widget build(BuildContext context) {
     switch (_currentScreen) {
-      case GameScreen.intro:
-        return IntroScreen(
-          onStart: () => _transitionTo(GameScreen.registration),
+      case GameScreen.splash:
+        return SplashScreen(
+          onComplete: () => _transitionTo(GameScreen.onboarding),
         );
 
-      case GameScreen.registration:
-        return RegistrationScreen(
-          onCharacterCreated: (name, initialMetrics) {
+      case GameScreen.onboarding:
+        return OnboardingScreen(
+          onComplete: () => _transitionTo(GameScreen.characterSelect),
+        );
+
+      case GameScreen.characterSelect:
+        return CharacterSelectScreen(
+          onCharacterSelected: (name, metrics) {
             _playerName = name;
-            _gameMetrics = initialMetrics;
-            _transitionTo(GameScreen.gameplay);
+            _gameMetrics = metrics;
+            _transitionTo(GameScreen.home);
           },
+        );
+
+      case GameScreen.home:
+        return HomeScreen(
+          playerName: _playerName ?? 'Operative',
+          metrics: _gameMetrics,
+          onPlayMission: () => _transitionTo(GameScreen.gameplay),
+          onViewProfile: () => _transitionTo(GameScreen.profile),
+          onViewLeaderboard: () => _transitionTo(GameScreen.leaderboard),
+          onViewSettings: () => _transitionTo(GameScreen.settings),
         );
 
       case GameScreen.gameplay:
         return GameplayScreen(
           playerName: _playerName ?? 'Operative',
           initialMetrics: _gameMetrics,
-          onGameReset: () => _transitionTo(GameScreen.intro),
+          onMetricsUpdate: (newMetrics) {
+            _gameMetrics = newMetrics;
+          },
+          onReturnHome: () => _transitionTo(GameScreen.home),
+          onGameReset: () => _transitionTo(GameScreen.splash),
+        );
+
+      case GameScreen.profile:
+        return ProfileScreen(
+          playerName: _playerName ?? 'Operative',
+          metrics: _gameMetrics,
+          onBack: () => _transitionTo(GameScreen.home),
+        );
+
+      case GameScreen.leaderboard:
+        return LeaderboardScreen(
+          playerName: _playerName ?? 'Operative',
+          playerMetrics: _gameMetrics,
+          onBack: () => _transitionTo(GameScreen.home),
+        );
+
+      case GameScreen.settings:
+        return SettingsScreen(
+          onBack: () => _transitionTo(GameScreen.home),
+          onResetGame: () => _transitionTo(GameScreen.splash),
+        );
+
+      case GameScreen.storyMap:
+        return StoryMapScreen(
+          metrics: _gameMetrics,
+          onSelectNode: () => _transitionTo(GameScreen.gameplay),
+          onBack: () => _transitionTo(GameScreen.home),
         );
     }
   }
@@ -280,12 +342,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 class GameplayScreen extends StatefulWidget {
   final String playerName;
   final GameMetrics initialMetrics;
+  final Function(GameMetrics) onMetricsUpdate;
+  final VoidCallback onReturnHome;
   final VoidCallback onGameReset;
 
   const GameplayScreen({
     super.key,
     required this.playerName,
     required this.initialMetrics,
+    required this.onMetricsUpdate,
+    required this.onReturnHome,
     required this.onGameReset,
   });
 
@@ -372,11 +438,19 @@ class _GameplayScreenState extends State<GameplayScreen>
 
   Future<void> _handleChoice(GameChoice choice) async {
     // Apply local state metrics modifiers dynamically
+    final personalityDelta = choice.personalityImpact;
     final newMetrics = _currentMetrics.copyWith(
       mutualAid: _currentMetrics.mutualAid + choice.mutualAidDelta,
       ecoIndex: _currentMetrics.ecoIndex + choice.ecoIndexDelta,
       funds: _currentMetrics.funds + choice.fundsDelta,
+      empathyIndex: _currentMetrics.empathyIndex + (personalityDelta?.empathyDelta ?? 0),
+      techAptitude: _currentMetrics.techAptitude + (personalityDelta?.techDelta ?? 0),
+      leadership: _currentMetrics.leadership + (personalityDelta?.leadershipDelta ?? 0),
+      rebellionIndex: _currentMetrics.rebellionIndex + (personalityDelta?.rebellionDelta ?? 0),
+      totalNodesVisited: _currentMetrics.totalNodesVisited + 1,
     ).clamp();
+
+    widget.onMetricsUpdate(newMetrics);
 
     setState(() {
       _currentMetrics = newMetrics;
@@ -521,21 +595,38 @@ class _GameplayScreenState extends State<GameplayScreen>
 
                   const SizedBox(height: 24),
 
-                  // Reset button
-                  Center(
-                    child: TextButton(
-                      onPressed: widget.onGameReset,
-                      child: Text(
-                        'RESET GAME',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(
-                              color: Colors.white.withAlpha(
-                                  (0.4 * 255).toInt()),
-                            ),
+                  // Navigation buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: widget.onReturnHome,
+                        child: Text(
+                          'RETURN TO DASHBOARD',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: Colors.white.withAlpha(
+                                    (0.5 * 255).toInt()),
+                              ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                      TextButton(
+                        onPressed: widget.onGameReset,
+                        child: Text(
+                          'RESET GAME',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: Colors.white.withAlpha(
+                                    (0.4 * 255).toInt()),
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
