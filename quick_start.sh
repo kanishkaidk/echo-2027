@@ -1,0 +1,40 @@
+#!/bin/bash
+# ECHOES OF 2076 - QUICK START CHECKLIST
+
+echo "🎮 ECHOES OF 2076 - Secure Setup Complete"
+echo "=========================================="
+echo ""
+echo "✅ Step 1: Get Gemini API Key"
+echo "   👉 https://aistudio.google.com/app/apikeys"
+echo "   Copy your API key (AIza...)"
+echo ""
+echo "✅ Step 2: Add to .env File"
+echo "   Edit: .env"
+echo "   Replace: GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE"
+echo "   With: GEMINI_API_KEY=AIza_your_key_here"
+echo ""
+echo "✅ Step 3: Install & Run"
+echo ""
+echo "   # Install dependencies"
+flutter pub get
+echo ""
+echo "   # Verify compilation"
+flutter analyze
+echo ""
+echo "   # Run tests"
+flutter test
+echo ""
+echo "   # Launch the game"
+flutter run
+echo ""
+echo "📚 Documentation Files:"
+echo "   • ENV_SETUP.md        - Secure .env configuration"
+echo "   • SETUP_GUIDE.md      - General setup & troubleshooting"
+echo "   • ARCHITECTURE.md     - Code structure & design"
+echo ""
+echo "🔒 Security:"
+echo "   ✓ .env is in .gitignore (never committed)"
+echo "   ✓ .env.example shows structure (safe to commit)"
+echo "   ✓ API key loaded securely via flutter_dotenv"
+echo ""
+echo "🌃 Ready to enter 2076? Type: flutter run"
