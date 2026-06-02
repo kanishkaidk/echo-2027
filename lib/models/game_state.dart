@@ -1,35 +1,77 @@
 import 'package:flutter/material.dart';
 
 class GameMetrics {
-  final int mutualAid; // Community trust (0-100)
-  final int ecoIndex; // Environmental restoration (0-100)
-  final int funds; // Credits available (0-∞)
+  final int mutualAid;
+  final int ecoIndex;
+  final int funds;
+  final int empathyIndex;
+  final int techAptitude;
+  final int leadership;
+  final int rebellionIndex;
+  final int totalNodesVisited;
+  final DateTime sessionStartTime;
 
   GameMetrics({
     this.mutualAid = 50,
     this.ecoIndex = 30,
     this.funds = 200,
-  });
+    this.empathyIndex = 40,
+    this.techAptitude = 40,
+    this.leadership = 40,
+    this.rebellionIndex = 30,
+    this.totalNodesVisited = 0,
+    DateTime? sessionStartTime,
+  }) : sessionStartTime = sessionStartTime ?? DateTime.now();
 
   GameMetrics copyWith({
     int? mutualAid,
     int? ecoIndex,
     int? funds,
+    int? empathyIndex,
+    int? techAptitude,
+    int? leadership,
+    int? rebellionIndex,
+    int? totalNodesVisited,
   }) {
     return GameMetrics(
       mutualAid: mutualAid ?? this.mutualAid,
       ecoIndex: ecoIndex ?? this.ecoIndex,
       funds: funds ?? this.funds,
+      empathyIndex: empathyIndex ?? this.empathyIndex,
+      techAptitude: techAptitude ?? this.techAptitude,
+      leadership: leadership ?? this.leadership,
+      rebellionIndex: rebellionIndex ?? this.rebellionIndex,
+      totalNodesVisited: totalNodesVisited ?? this.totalNodesVisited,
+      sessionStartTime: sessionStartTime,
     );
   }
 
-  // Clamp metrics to 0-100 range
   GameMetrics clamp() {
     return GameMetrics(
       mutualAid: mutualAid.clamp(0, 100),
       ecoIndex: ecoIndex.clamp(0, 100),
       funds: funds,
+      empathyIndex: empathyIndex.clamp(0, 100),
+      techAptitude: techAptitude.clamp(0, 100),
+      leadership: leadership.clamp(0, 100),
+      rebellionIndex: rebellionIndex.clamp(0, 100),
+      totalNodesVisited: totalNodesVisited,
+      sessionStartTime: sessionStartTime,
     );
+  }
+
+  int getElapsedSeconds() {
+    return DateTime.now().difference(sessionStartTime).inSeconds;
+  }
+
+  String getOperativeLevel() {
+    final total = mutualAid + ecoIndex + empathyIndex + techAptitude + leadership;
+    if (total > 400) return 'OMEGA OPERATIVE';
+    if (total > 350) return 'TIER-7 OPERATIVE';
+    if (total > 300) return 'ELITE OPERATIVE';
+    if (total > 250) return 'SENIOR OPERATIVE';
+    if (total > 200) return 'VETERAN';
+    return 'ROOKIE';
   }
 }
 
@@ -39,7 +81,8 @@ class GameChoice {
   final int mutualAidDelta;
   final int ecoIndexDelta;
   final int fundsDelta;
-  final bool isHighStakes; // Determines visual styling
+  final bool isHighStakes;
+  final PersonalityDelta? personalityImpact;
 
   GameChoice({
     required this.id,
@@ -48,6 +91,7 @@ class GameChoice {
     this.ecoIndexDelta = 0,
     this.fundsDelta = 0,
     this.isHighStakes = false,
+    this.personalityImpact,
   });
 
   factory GameChoice.fromJson(Map<String, dynamic> json) {
@@ -58,6 +102,9 @@ class GameChoice {
       ecoIndexDelta: json['ecoIndexDelta'] as int? ?? 0,
       fundsDelta: json['fundsDelta'] as int? ?? 0,
       isHighStakes: json['isHighStakes'] as bool? ?? false,
+      personalityImpact: json['personalityImpact'] != null
+          ? PersonalityDelta.fromJson(json['personalityImpact'])
+          : null,
     );
   }
 
@@ -69,6 +116,39 @@ class GameChoice {
       'ecoIndexDelta': ecoIndexDelta,
       'fundsDelta': fundsDelta,
       'isHighStakes': isHighStakes,
+      if (personalityImpact != null) 'personalityImpact': personalityImpact!.toJson(),
+    };
+  }
+}
+
+class PersonalityDelta {
+  final int empathyDelta;
+  final int techDelta;
+  final int leadershipDelta;
+  final int rebellionDelta;
+
+  PersonalityDelta({
+    this.empathyDelta = 0,
+    this.techDelta = 0,
+    this.leadershipDelta = 0,
+    this.rebellionDelta = 0,
+  });
+
+  factory PersonalityDelta.fromJson(Map<String, dynamic> json) {
+    return PersonalityDelta(
+      empathyDelta: json['empathy'] as int? ?? 0,
+      techDelta: json['tech'] as int? ?? 0,
+      leadershipDelta: json['leadership'] as int? ?? 0,
+      rebellionDelta: json['rebellion'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'empathy': empathyDelta,
+      'tech': techDelta,
+      'leadership': leadershipDelta,
+      'rebellion': rebellionDelta,
     };
   }
 }
