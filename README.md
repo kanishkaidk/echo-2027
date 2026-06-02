@@ -1,17 +1,21 @@
-# my_first_app
+# 🌆 Echoes of 2076
 
-A new Flutter project.
+An immersive, brutalist cyber-industrial visual novel and text-based role-playing game built using Flutter. Set in the toxic, corporate-choked underbelly of a futuristic Delhi, players navigate a dense web of systemic resistance, mutual aid logistics, and black-market software deployment. 
 
-## Getting Started
+Every choice carries systemic weight—shifting local metrics, fluctuating currency assets, and profiling your strategic personality profile in real-time.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🎨 Design System: Delhi 2076 Neo-Noir
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+This application deliberately rejects standard modern flat design trends and overused color schemes. Instead, it implements a highly custom, **Brutalist Cyber-Industrial** visual framework optimized for high-density terminal readability:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+* **Scaffold Void (`0xFF020204`):** An absolute obsidian canvas mimicking deactivated military terminal hardware.
+* **Toxic Mint Green (`0xFF00FFCC`):** The primary color vector used for stable system frameworks, grid lines, and active terminal paths.
+* **Neon Synth-Pink (`0xFFFF006E`):** Used strictly for high-stakes operational choices, compromised security overrides, and systemic failures.
+* **Cyber-Gold (`0xFFFFD700`):** Tracks your liquid nano-scrip transaction indicators.
+* **Cathode-Ray Typography:** Monospaced structural text pairing a custom layout hierarchy with subtle glowing drop-shadows to emulate vintage high-frequency CRT monitor matrices.
+
+---
+
+## ⚙️ Core Architecture & RPG Mechanics
