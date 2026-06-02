@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
+
+// ignore: unused_import
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'models/game_state.dart';
 import 'services/gemini_service.dart';
@@ -8,19 +11,11 @@ import 'widgets/typewriter_text.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Try loading .env, but don't fail if it doesn't exist (for web builds)
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (e) {
-    // Expected on web platform - continue with environment variables
-  }
-
   runApp(const EchoesOf2076App());
 }
 
 class EchoesOf2076App extends StatelessWidget {
-  const EchoesOf2076App({Key? key}) : super(key: key);
+  const EchoesOf2076App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +55,7 @@ class EchoesOf2076App extends StatelessWidget {
 enum GameScreen { intro, registration, gameplay }
 
 class GameRouter extends StatefulWidget {
-  const GameRouter({Key? key}) : super(key: key);
+  const GameRouter({super.key});
 
   @override
   State<GameRouter> createState() => _GameRouterState();
@@ -109,7 +104,7 @@ class _GameRouterState extends State<GameRouter> {
 class IntroScreen extends StatefulWidget {
   final VoidCallback onStart;
 
-  const IntroScreen({Key? key, required this.onStart}) : super(key: key);
+  const IntroScreen({super.key, required this.onStart});
 
   @override
   State<IntroScreen> createState() => _IntroScreenState();
@@ -188,9 +183,9 @@ class RegistrationScreen extends StatefulWidget {
   final Function(String, GameMetrics) onCharacterCreated;
 
   const RegistrationScreen({
-    Key? key,
+    super.key,
     required this.onCharacterCreated,
-  }) : super(key: key);
+  });
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -288,11 +283,11 @@ class GameplayScreen extends StatefulWidget {
   final VoidCallback onGameReset;
 
   const GameplayScreen({
-    Key? key,
+    super.key,
     required this.playerName,
     required this.initialMetrics,
     required this.onGameReset,
-  }) : super(key: key);
+  });
 
   @override
   State<GameplayScreen> createState() => _GameplayScreenState();
@@ -315,14 +310,14 @@ class _GameplayScreenState extends State<GameplayScreen>
       vsync: this,
     );
 
-    // Initialize Gemini service
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    // Secure compiler link setup
+    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
 
     if (apiKey.isEmpty || apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       _showApiKeyError();
     } else {
       _geminiService = GeminiService(apiKey: apiKey);
-      _generateInitialNode();
+      _loadBaselineIntroNode();
     }
   }
 
@@ -336,56 +331,47 @@ class _GameplayScreenState extends State<GameplayScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text(
-          'API Key missing! Update .env file with your GEMINI_API_KEY',
+          'API Key missing! Please launch using --dart-define config.',
         ),
         backgroundColor: const Color(0xFFFF006E),
       ),
     );
   }
 
-  Future<void> _generateInitialNode() async {
-    setState(() => _isLoading = true);
-    try {
-      // Create an initial choice object for context
-      final initialChoice = GameChoice(
-        id: 'intro',
-        text: 'Accept the mission',
-        mutualAidDelta: 0,
-        ecoIndexDelta: 0,
-        fundsDelta: 0,
-      );
-
-      // Generate initial node using GeminiService
-      final nextNode = await _geminiService.generateNextNode(
-        playerChoice: initialChoice,
-        currentMetrics: _currentMetrics,
-        previousNodeId: 'init',
-      );
-
-      if (mounted) {
-        setState(() {
-          _currentNode = nextNode;
-          _isLoading = false;
-        });
-
-        await Future.delayed(const Duration(milliseconds: 100));
-        _nodeTransitionController.forward();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: const Color(0xFFFF006E),
+  /// Injects the static baseline intro branch bypassing empty system calls
+  void _loadBaselineIntroNode() {
+    setState(() {
+      _currentNode = StoryNode(
+        id: "intro_sector_7",
+        characterName: "The Ghost Matrix",
+        dialogueText: "Welcome back, ${widget.playerName}. The atmospheric acid levels outside have spiked. Corporate overrides have locked the oxygen scrubbers behind premium credit walls on lower hab-decks. Below the visual neon spires, our underground resistance is struggling to sustain a solar-punk structural grid. A fresh decryption pulse has intercepted corporate blueprints. Make your play.",
+        typewrittenText: "Welcome back, ${widget.playerName}. The atmospheric acid levels outside have spiked. Corporate overrides have locked the oxygen scrubbers behind premium credit walls on lower hab-decks. Below the visual neon spires, our underground resistance is struggling to sustain a solar-punk structural grid. A fresh decryption pulse has intercepted corporate blueprints. Make your play.",
+        characterAvatar: "assets/avatars/narrator.png",
+        choices: [
+          GameChoice(
+            id: "choice_leak_1",
+            text: "Reroute generator matrices to power public hydroponic bays",
+            mutualAidDelta: 15,
+            ecoIndexDelta: 10,
+            fundsDelta: -100,
+            isHighStakes: false,
           ),
-        );
-      }
-      setState(() => _isLoading = false);
-    }
+          GameChoice(
+            id: "choice_leak_2",
+            text: "Sell the encryption bypass arrays to an autonomous corporate broker",
+            mutualAidDelta: -25,
+            ecoIndexDelta: -10,
+            fundsDelta: 350,
+            isHighStakes: true,
+          ),
+        ],
+      );
+    });
+    _nodeTransitionController.forward();
   }
 
   Future<void> _handleChoice(GameChoice choice) async {
-    // Apply metrics changes
+    // Apply local state metrics modifiers dynamically
     final newMetrics = _currentMetrics.copyWith(
       mutualAid: _currentMetrics.mutualAid + choice.mutualAidDelta,
       ecoIndex: _currentMetrics.ecoIndex + choice.ecoIndexDelta,
@@ -400,6 +386,7 @@ class _GameplayScreenState extends State<GameplayScreen>
     _nodeTransitionController.reset();
 
     try {
+      // Direct call to our clean parsed service layer
       final nextNode = await _geminiService.generateNextNode(
         playerChoice: choice,
         currentMetrics: newMetrics,
@@ -455,7 +442,7 @@ class _GameplayScreenState extends State<GameplayScreen>
         body: Center(
           child: _AnimatedButton(
             label: 'RETRY',
-            onPressed: _generateInitialNode,
+            onPressed: _loadBaselineIntroNode,
           ),
         ),
       );
@@ -565,9 +552,9 @@ class _DialogueBox extends StatefulWidget {
   final StoryNode node;
 
   const _DialogueBox({
-    Key? key,
+    super.key,
     required this.node,
-  }) : super(key: key);
+  });
 
   @override
   State<_DialogueBox> createState() => _DialogueBoxState();
@@ -710,7 +697,7 @@ class _ChoicePillState extends State<_ChoicePill>
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: accentColor,
                     fontWeight: FontWeight.w600,
-              ),
+                  ),
               textAlign: TextAlign.center,
             ),
           ),

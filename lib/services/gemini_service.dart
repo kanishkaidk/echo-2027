@@ -37,12 +37,13 @@ RULES:
 
   GeminiService({required String apiKey}) {
     model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      // Standard stable identifier that aligns perfectly across different package SDK versions
+      model: 'gemini-1.5-flash', 
       apiKey: apiKey,
       systemInstruction: Content.system(_systemPrompt),
       generationConfig: GenerationConfig(
-        responseMimeType: 'application/json', // Forces raw JSON compliance
-        temperature: 0.85, // Raised slightly for cooler, more dynamic cyberpunk prose
+        responseMimeType: 'application/json',
+        temperature: 0.85,
         topK: 40,
         topP: 0.9,
       ),
@@ -70,7 +71,6 @@ RULES:
 
       return StoryNode.fromJson(jsonData);
     } catch (e) {
-      print("Gemini Generation Error: $e");
       // Fallback Node so your game UI never crashes if a parsing mistake happens
       return StoryNode(
         id: "fallback_error",
